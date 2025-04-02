@@ -14,8 +14,8 @@ public:
 
         // Open camera
         cap_.open(3);  // Change camera index if needed
-        cap_.set(cv::CAP_PROP_FRAME_WIDTH, 320);
-        cap_.set(cv::CAP_PROP_FRAME_HEIGHT, 240);
+        cap_.set(cv::CAP_PROP_FRAME_WIDTH, 176);
+        cap_.set(cv::CAP_PROP_FRAME_HEIGHT, 144);
 
         if (!cap_.isOpened()) {
             RCLCPP_ERROR(this->get_logger(), "Could not open video device");

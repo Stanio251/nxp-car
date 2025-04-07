@@ -1,0 +1,584 @@
+<?xml version="1.0" ?>
+<sdf version="1.8" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <model name='nxp_cupcar'>
+
+
+    <xacro:property name="mass_cam" value="0.1"/>
+    <xacro:property name="mass_wheel" value="0.05"/>
+    <xacro:property name="mass_chassis" value="1.2"/>
+
+    <xacro:property name="r" value="0.033"/>
+    <xacro:property name="h" value="0.022"/>    
+    <!-- ************ macro for computing the inertia tensor  ************ -->
+    <xacro:macro name="inertia_cylinder" params="mass r h">
+      <inertia ixx="${(1/12) * mass * (3*r*r+h*h)}" 
+      ixy="0.0" 
+      ixz="0.0" 
+      iyy="${(1/12) * mass * (3*r*r+h*h)}" 
+      iyz="0.0" 
+      izz="${(1/2) * mass * (r*r)}" />
+    </xacro:macro>
+
+
+
+
+
+
+
+    <link name='nxp_cupcar_frame_link'>
+      <pose>0 0 0 0 0 0</pose><!-- 0 0 0.05 0 0 1.57079632679 -->
+    </link>
+
+    <link name="nxp_cupcar_rotated">
+      <pose relative_to="nxp_cupcar_frame_link">0 0 0.05 0 0 1.57079632679</pose>
+      <inertial>
+        <pose>-0.00078972 0.09106592 -0.00437261 0 0 0</pose> 
+        <mass>1.2</mass>
+        <inertia>
+        <!--inertia ixx="0.00784802" ixy="-0.00000030" ixz="-0.00000004" iyy="0.00192778" iyz="-0.00019131" izz="0.00932287"/-->
+          <ixx>0.00784802</ixx>
+          <ixy>-0.00000030</ixy>
+          <ixz>-0.00000004</ixz>
+          <iyy>0.00192778</iyy>
+          <iyz>-0.00019131</iyz>
+          <izz>0.00932287</izz>
+        </inertia>
+      </inertial>
+      
+      <visual name='nxp_cupcar_frame_collision_visual'>
+        <geometry>
+          <mesh>
+            <!--<uri>package://ros_gz_model_description/models/nxp_cupcar/meshes/CUPCarCarbonFiber_binary.stl</uri>-->
+            <uri>package://ros_gz_model_description/models/nxp_cupcar/meshes/CUPCarCollisionBody.stl</uri>
+            <scale>1.0 1.0 1.0</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.2 0.2 0.2 1</ambient>
+          <diffuse>0.3 0.3 0.3 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+    
+      <collision name='nxp_cupcar_frame_collision'>
+        <geometry>
+          <mesh>
+            <uri>package://ros_gz_model_description/models/nxp_cupcar/meshes/CUPCarCollisionBody.stl</uri>
+            <scale>1.0 1.0 1.0</scale>
+        </mesh>
+        </geometry>
+      </collision>
+      
+    </link>
+    
+    <joint name='nxp_cupcar_base_joint' type='fixed'>
+        <parent>nxp_cupcar_frame_link</parent>
+        <child>nxp_cupcar_rotated</child>
+    </joint>
+<!--*************************************************************************************-->
+    <link name ='camera_stabilizer_link'>
+      <pose relative_to="nxp_cupcar_rotated">0 0.213 0.15 0 0 0</pose>
+      <inertial>
+        <mass>0.001</mass>
+      </inertial>
+      <visual name="visual">
+        <geometry>
+          <cylinder>
+            <radius>0.01</radius>
+            <length>0.3</length>
+          </cylinder>
+        </geometry>
+        <collision name="collision">
+        <geometry>
+          <cylinder>
+            <radius>0.01</radius>
+            <length>0.3</length>
+          </cylinder>
+        </geometry>
+      </collision>
+
+      </visual>
+
+
+    </link>
+
+    <joint name='camera_stabilizer_joint' type='fixed'>
+        <parent>nxp_cupcar_frame_link</parent>
+        <child>camera_stabilizer_link</child>
+    </joint>
+
+    <link name='camera_link'>
+      <pose relative_to="nxp_cupcar_rotated">0 0.213 0.3 0 0 0</pose>
+      <inertial>
+        <mass>0.1</mass>
+      </inertial>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>0.01 0.01 0.01</size>
+          </box>
+        </geometry>
+        <!--<geometry>
+          <mesh>
+            <uri>package://ros_gz_model_description/models/nxp_cupcar/meshes/3dCamera.DAE</uri>
+            <scale>1.0 1.0 1.0</scale>
+          </mesh>
+        </geometry>-->
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.01 0.01 0.01</size>
+          </box>
+        </geometry>
+        <!--<geometry>
+          <mesh>
+            <uri>package://ros_gz_model_description/models/nxp_cupcar/meshes/3dCamera.DAE</uri>
+            <scale>1.0 1.0 1.0</scale>
+          </mesh>
+        </geometry>-->
+
+
+      </visual>
+
+      
+    </link>
+
+    <joint name='camera_joint' type='fixed'>
+        <parent>camera_stabilizer_link</parent>
+        <child>camera_link</child>
+    </joint>
+    <joint name='camera_optical_joint' type='fixed'>
+        <parent>camera_link</parent>
+        <child>camera_link_optical</child>
+    </joint>
+
+    <link name='camera_link_optical'>
+      <pose relative_to="camera_link">0 0 0 0 0.5236  -1.5708</pose><!-- the camera is oriented 30 degrees around y axis-->
+      <sensor name="camera_rgbd" type="rgbd_camera">
+        <update_rate>30</update_rate>
+        <frame_id>camera_frame</frame_id>
+        <topic>/images_rgbd</topic>
+        <camera>
+          <horizontal_fov>1.05</horizontal_fov>
+          <image>
+            <width>256</width>
+            <height>256</height>
+          </image>
+          <clip>
+            <near>0.05</near>
+            <far>10.0</far>
+          </clip>
+          <!--<noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>-->
+        </camera>
+      </sensor>
+    </link>
+
+    
+    <link name='nxp_cupcar_front_left_wheel_link'>
+      <pose>-.04 0.07 0.033 -1.57079632679 0 0</pose>
+      
+      <inertial>
+        <mass value="${mass_wheel}"/>
+        <xacro:inertia_cylinder mass="${mass_wheel}" r="${r}" h="${h}"/>
+        
+      </inertial>
+      
+      <collision name='nxp_cupcar_front_left_wheel_collision'>
+        <geometry>
+          <cylinder>
+            <radius value="${r}"/>
+            <length value="${h}"/>
+          </cylinder>
+        </geometry>
+        
+        <max_contacts>1</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>2.0</mu2>
+              <fdir1>1 0 0</fdir1>
+              <slip1>0.0</slip1>
+              <slip2>0.0</slip2>
+            </ode>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>1e6</threshold>
+          </bounce>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0.0</max_vel>
+              <kp>1.0e6</kp>
+              <kd>100.0</kd>
+            </ode>
+          </contact>
+        </surface>
+        
+      </collision>
+      
+      <visual name='nxp_cupcar_front_left_wheel_collision_visual'>
+        <geometry>
+          <cylinder>
+            <radius value="${r}"/>
+            <length value="${h}"/>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.4 0.4 0.4 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+    
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <link name='nxp_cupcar_front_right_wheel_link'>
+      <pose>-.04 -0.07 0.033 -1.57079632679 0 0</pose>
+      <inertial>
+        <mass value="${mass_wheel}"/>
+        <xacro:inertia_cylinder mass="${mass_wheel}" r="${r}" h="${h}"/>
+      </inertial>
+      <collision name='nxp_cupcar_front_right_wheel_collision'>
+        <geometry>
+          <cylinder>
+            <radius value="${r}"/>
+            <length value="${h}"/>
+          </cylinder>
+        </geometry>
+        
+        <max_contacts>1</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>2.0</mu2>
+              <fdir1>1 0 0</fdir1>
+              <slip1>0.0</slip1>
+              <slip2>0.0</slip2>
+            </ode>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>1e6</threshold>
+          </bounce>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0.0</max_vel>
+              <kp>1.0e6</kp>
+              <kd>100.0</kd>
+            </ode>
+          </contact>
+        </surface>
+        
+      </collision>
+      <visual name='nxp_cupcar_front_right_wheel_collision_visual'>
+        <geometry>
+          <cylinder>
+            <radius value="${r}"/>
+            <length value="${h}"/>
+          </cylinder>
+        </geometry>
+        <!-- addition -->
+        <material>
+          <ambient>0.4 0.4 0.4 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+    
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+    <link name='nxp_cupcar_rear_left_wheel_link'>
+      <pose>-.213 0.07 0.033 -1.57079632679 0 0</pose>
+      <inertial>
+        <mass value="${mass_wheel}"/>
+        <xacro:inertia_cylinder mass="${mass_wheel}" r="${r}" h="${h}"/>
+      </inertial>
+      <collision name='nxp_cupcar_rear_left_wheel_collision'>
+        <geometry>
+          <cylinder>
+            <radius value="${r}"/>
+            <length value="${h}"/>
+          </cylinder>
+        </geometry>
+        
+        <max_contacts>1</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.7</mu>
+              <mu2>0.7</mu2>
+              <fdir1>1 0 0</fdir1>
+              <slip1>0.0</slip1>
+              <slip2>0.0</slip2>
+            </ode>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>1e6</threshold>
+          </bounce>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0.0</max_vel>
+              <kp>1.0e6</kp>
+              <kd>100.0</kd>
+            </ode>
+          </contact>
+        </surface>
+        
+      </collision>
+      <visual name='nxp_cupcar_rear_left_wheel_collision_visual'>
+        <geometry>
+          <cylinder>
+            <radius>0.033</radius>
+            <length>0.024</length>
+          </cylinder>
+        </geometry>
+        <!--addition-->
+        <material>
+          <ambient>0.4 0.4 0.4 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+    
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+
+    <link name='nxp_cupcar_rear_right_wheel_link'>
+      <pose>-.213 -0.07 0.033 -1.57079632679 0 0</pose>
+      <inertial>
+        <mass value="${mass_wheel}"/>
+        <xacro:inertia_cylinder mass="${mass_wheel}" r="${r}" h="${h}"/>
+      </inertial>
+      <collision name='nxp_cupcar_rear_right_wheel_collision'>
+        <geometry>
+          <cylinder>
+            <radius value="${r}"/>
+            <length value="${h}"/>
+          </cylinder>
+        </geometry>
+        
+        <max_contacts>1</max_contacts>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.7</mu>
+              <mu2>0.7</mu2>
+              <fdir1>1 0 0</fdir1>
+              <slip1>0.0</slip1>
+              <slip2>0.0</slip2>
+            </ode>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>1e6</threshold>
+          </bounce>
+          <contact>
+            <ode>
+              <min_depth>0.001</min_depth>
+              <max_vel>0.0</max_vel>
+              <kp>1.0e6</kp>
+              <kd>100.0</kd>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+      <visual name='nxp_cupcar_rear_right_wheel_collision_visual'>
+        <geometry>
+          <cylinder>
+            <radius value="${r}"/>
+            <length value="${h}"/>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.4 0.4 0.4 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+          <emissive>0 0 0 1</emissive>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay/>
+
+    </link>
+    <link name='nxp_cupcar_front_right_wheel_steering_link'>
+      <pose>-.04 -0.06 0.033 0 0 0</pose>
+      <inertial>
+        <mass>0.001</mass>
+        <inertia>
+          <ixx>0.001</ixx>
+          <ixy>0.0</ixy>
+          <iyy>0.001</iyy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+          <izz>0.001</izz>
+        </inertia>
+      </inertial>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+
+    <link name='nxp_cupcar_front_left_wheel_steering_link'>
+      <pose>-.04 0.06 0.033 0 0 0</pose>
+      <inertial>
+        <mass>0.001</mass>
+        <inertia>
+          <ixx>0.001</ixx>
+          <ixy>0.0</ixy>
+          <iyy>0.001</iyy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+          <izz>0.001</izz>
+        </inertia>
+      </inertial>
+      <gravity>1</gravity>
+      <velocity_decay/>
+    </link>
+
+    <joint type='revolute' name='nxp_cupcar_front_left_steering_joint'>
+      <child>nxp_cupcar_front_left_wheel_steering_link</child>
+      <parent>nxp_cupcar_frame_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <effort>1e6</effort>
+          <lower>-0.7727</lower>
+          <upper>0.7727</upper>
+        </limit>
+
+        <dynamics>
+          <friction>.1</friction>
+          <damping>0.5</damping>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>true</use_parent_model_frame>
+      </axis>
+    </joint>
+    <joint type='revolute' name='nxp_cupcar_front_right_steering_joint'>
+      <child>nxp_cupcar_front_right_wheel_steering_link</child>
+      <parent>nxp_cupcar_frame_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <effort>1e6</effort>
+          <lower>-0.7727</lower>
+          <upper>0.7727</upper>
+        </limit>
+        <dynamics>
+          <friction>.1</friction>
+          <damping>0.5</damping>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>true</use_parent_model_frame>
+      </axis>
+    </joint>
+    <joint type='revolute' name='nxp_cupcar_front_left_wheel_joint'>
+      <child>nxp_cupcar_front_left_wheel_link</child>
+      <parent>nxp_cupcar_front_left_wheel_steering_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz> <!--because we rotated the wheel with 90 degrees, the same for other wheels -->
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <joint type='revolute' name='nxp_cupcar_front_right_wheel_joint'>
+      <child>nxp_cupcar_front_right_wheel_link</child>
+      <parent>nxp_cupcar_front_right_wheel_steering_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <joint type='revolute' name='nxp_cupcar_rear_left_wheel_joint'>
+      <child>nxp_cupcar_rear_left_wheel_link</child>
+      <parent>nxp_cupcar_frame_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <joint type='revolute' name='nxp_cupcar_rear_right_wheel_joint'>
+      <child>nxp_cupcar_rear_right_wheel_link</child>
+      <parent>nxp_cupcar_frame_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1e+16</lower>
+          <upper>1e+16</upper>
+        </limit>
+        <dynamics>
+          <spring_reference>0</spring_reference>
+          <spring_stiffness>0</spring_stiffness>
+        </dynamics>
+        <use_parent_model_frame>1</use_parent_model_frame>
+      </axis>
+    </joint>
+    <!-- if the car is not differentially driven, this might need to be deleted -->
+    <plugin
+      filename="ignition-gazebo-ackermann-steering-system"
+      name="gz::sim::systems::AckermannSteering">
+      <left_joint>nxp_cupcar_front_left_wheel_joint</left_joint>
+      <left_joint>nxp_cupcar_rear_left_wheel_joint</left_joint>
+      <right_joint>nxp_cupcar_front_right_wheel_joint</right_joint>
+      <right_joint>nxp_cupcar_rear_right_wheel_joint</right_joint>
+      <left_steering_joint>nxp_cupcar_front_left_steering_joint</left_steering_joint>
+      <right_steering_joint>nxp_cupcar_front_right_steering_joint</right_steering_joint>
+      <kingpin_width>1.0</kingpin_width>
+      <steering_limit>0.5</steering_limit>
+      <wheel_base>1.0</wheel_base>
+      <wheel_separation>0.14</wheel_separation>
+      <wheel_radius>0.033</wheel_radius>
+      <min_velocity>-1</min_velocity>
+      <max_velocity>1</max_velocity>
+      <min_acceleration>-3</min_acceleration>
+      <max_acceleration>3</max_acceleration>
+      <topic>cmd_vel</topic><!-- subscribed topic -->
+      <tf_topic>/model/nxp_cupcar/AckermannSteering_pose</tf_topic><!--  only for clarity, kept the default topic name (/model/{name_of_model}/tf), it publishes the tf only between the frame id and the child frame-->
+      <frame_id>nxp_cupcar/odom</frame_id> <!--  only for clarity, kept the default value-->
+      <child_frame_id>nxp_cupcar_frame_link</child_frame_id> <!--   the default value was : nxp_cupcar/nxp_cupcar_frame_link.-->
+      <odom_topic>/model/nxp_cupcar/AckermannSteering_odometry</odom_topic> <!--  the default value /model/{name_of_model}/odometry-->
+    </plugin>  
+  </model>
+</sdf>

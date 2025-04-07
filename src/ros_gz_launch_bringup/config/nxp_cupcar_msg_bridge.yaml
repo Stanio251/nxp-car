@@ -1,0 +1,77 @@
+---
+- ros_topic_name: "/clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "ignition.msgs.Clock"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/nxp_cupcar/odometry"
+  gz_topic_name: "/model/nxp_cupcar/odometry"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/nxp_cupcar/scan"
+  gz_topic_name: "/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/joint_states"
+  gz_topic_name: "/world/cupcar_world/model/nxp_cupcar/joint_state"
+  ros_type_name: "sensor_msgs/msg/JointState"
+  gz_type_name: "gz.msgs.Model"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/tf"
+  gz_topic_name: "/model/nxp_cupcar/pose"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS
+  ## not puplished:
+- ros_topic_name: "/tf_static"
+  gz_topic_name: "/model/nxp_cupcar/pose_static"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS
+  ##
+- ros_topic_name: "/images_rgbd/camera_info"
+  gz_topic_name: "/images_rgbd/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "ignition.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/images_rgbd/depth_image"
+  gz_topic_name: "/images_rgbd/depth_image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "ignition.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/images_rgbd/image"
+  gz_topic_name: "/images_rgbd/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "ignition.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/images_rgbd/points"
+  gz_topic_name: "/images_rgbd/points"
+  ros_type_name: "sensor_msgs/msg/PointCloud2"
+  gz_type_name: "ignition.msgs.PointCloudPacked"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/controller/cmd_vel"
+  gz_topic_name: "/cmd_vel"
+  ros_type_name: "geometry_msgs/msg/Twist"
+  gz_type_name: "ignition.msgs.Twist"
+  direction: ROS_TO_GZ
+
+- ros_topic_name: "/my_odometer_topic"
+  gz_topic_name: "/my_odometer_topic"
+  ros_type_name: "std_msgs/msg/Float64"
+  gz_type_name: "ignition.msgs.Double"
+  direction: GZ_TO_ROS
+ 
+ 
+
+
+
+

@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+<sdf version="1.8">    
+  <model name='nxp_raceway'>
+    <link name='nxp_raceway_link'>
+      <pose>0 0 -0.051 0 0 0</pose>
+      <collision name='nxp_raceway_collision'>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>package://ros_gz_model_description/models/nxp_raceway/meshes/CourseInside.stl</uri>
+          </mesh>
+        </geometry>
+      </collision>
+      <visual name='nxp_raceway_inside_visual'>
+        <cast_shadows>0</cast_shadows>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>package://ros_gz_model_description/models/nxp_raceway/meshes/CourseInside.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          
+            <!--<pbr>
+            <metal>
+               <albedo>1 0 0 0</albedo>    
+              <metalness>0</metalness>    
+              <roughness>0.5</roughness>    
+            </metal>
+            </pbr>-->
+          <ambient>1 0.95 0.85 1</ambient> 
+          <diffuse>1 0.95 0.85 1</diffuse>    <!-- Black diffuse -->
+          <specular>0.3 0.3 0.3 1</specular>  <!-- Low specular to simulate a matte finish -->
+          <emissive>0 0 0 1</emissive>  <!-- No emissive light -->
+            
+          
+        </material>
+
+
+      </visual>
+      <visual name='nxp_raceway_border_visual'>
+        <cast_shadows>0</cast_shadows>
+        <pose>-.02 -.02 -0.0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>package://ros_gz_model_description/models/nxp_raceway/meshes/CourseBorder.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0 0 0 1</ambient>    <!-- Black ambient -->
+          <diffuse>0 0 0 1</diffuse>    <!-- Black diffuse -->
+          <specular>0.1 0.1 0.1 1</specular>  <!-- Low specular to simulate a matte finish -->
+          <emissive>0 0 0 1</emissive>  <!-- No emissive light -->
+        </material>
+
+      </visual>
+    </link>
+  </model>
+</sdf>

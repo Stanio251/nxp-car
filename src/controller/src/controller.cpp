@@ -1,8 +1,37 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
-
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
+#include <vector>
+#include <stdexcept>
+#include "std_msgs/msg/int32.hpp"
+
+
+//quadratic curve fitting helper function
+cv::Vec3f fitQuadraticVertical(const std::vector<int>& x_vals, const std::vector<int>& y_vals) {
+  if (x_vals.size() != y_vals.size() || x_vals.size() < 3) {
+    cv::Vec3f coeffs(0.0f, 0.0f, 0.0f);
+    return coeffs;
+  }
+
+  int N = static_cast<int>(x_vals.size());
+  cv::Mat A(N, 3, CV_32F); // Design matrix
+  cv::Mat b(N, 1, CV_32F); // Target values
+
+  for (int i = 0; i < N; ++i) {
+    float y = static_cast<float>(y_vals[i]);
+    A.at<float>(i, 0) = y * y;
+    A.at<float>(i, 1) = y;
+    A.at<float>(i, 2) = 1.0f;
+    b.at<float>(i, 0) = static_cast<float>(x_vals[i]);
+  }
+
+  cv::Mat coeffs;  // Will hold [a, b, c]
+  cv::solve(A, b, coeffs, cv::DECOMP_QR);
+
+  return cv::Vec3f(coeffs); // a, b, c
+}
 
 class Controller : public rclcpp::Node {
 public:
@@ -44,6 +73,8 @@ public:
 
     //create birdview publisher
     bird_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/bird_view", 10);
+    //create error value publisher
+    angle_error_pub_ = this->create_publisher<std_msgs::msg::Int32>("/angle_error_value", 10);
   }
 
 private:
@@ -158,6 +189,15 @@ private:
           std::vector<std::vector<cv::Point>> contours_left;
           cv::findContours(left_window.clone(), contours_left, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
 
+          //append x and y vals of the left windows that contain line elements
+          int white_pixel_count = cv::countNonZero(left_window);
+          int threshold = 5;  // tune this based on your image and window size
+          
+          if (white_pixel_count >= threshold) {
+              squares_left_x.push_back((x_left_start + x_left_end) / 2);
+              squares_left_y.push_back(y);
+          }
+
           for (const auto& contour : contours_left) {
               cv::Moments M = cv::moments(contour);
               if (M.m00 != 0) {
@@ -176,6 +216,13 @@ private:
           cv::Mat right_window = borders(cv::Range(y_start, y), cv::Range(x_right_start, x_right_end));
           std::vector<std::vector<cv::Point>> contours_right;
           cv::findContours(right_window.clone(), contours_right, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+          
+          //append x and y vals of the right windows that contain line elements
+          white_pixel_count = cv::countNonZero(right_window);
+          if (white_pixel_count >= threshold) {
+              squares_right_x.push_back((x_right_start + x_right_end) / 2);
+              squares_right_y.push_back(y);
+          }
 
           for (const auto& contour : contours_right) {
               cv::Moments M = cv::moments(contour);
@@ -197,6 +244,36 @@ private:
 
       cv::imshow("Sliding Windows", msk);
 
+      //calculate the fitted curve using helper function
+      cv::Vec3f coeffs_left = fitQuadraticVertical(squares_left_x, squares_left_y);
+      cv::Vec3f coeffs_right = fitQuadraticVertical(squares_right_x, squares_right_y);
+      if(coeffs_left == cv::Vec3f(0.0f, 0.0f, 0.0f)){
+        coeffs_left = coeffs_right;
+      } else if (coeffs_right == cv::Vec3f(0.0f, 0.0f, 0.0f)){
+        coeffs_right = coeffs_left;
+      }
+      cv::Vec3f coeffs = (coeffs_left + coeffs_right) * 0.5f;
+      //visualize the fitted curve
+      float a = coeffs[0];
+      float b = coeffs[1];
+      float c = coeffs[2];
+      cv::Mat line = msk.clone();
+      for (int y = 0; y < image.rows; ++y) {
+        float x = a*y*y + b*y + c;
+        if (x >= 0 && x < image.cols) {
+          cv::circle(line, cv::Point(static_cast<int>(x), y), 1, cv::Scalar(255), -1);  // White dot
+        }
+      }
+      cv::imshow("Fitted Curve", line);
+      squares_left_x.clear();
+      squares_left_y.clear();
+      squares_right_x.clear();
+      squares_right_y.clear();      
+
+      //create error value msg and publish it
+      std_msgs::msg::Int32 msg;
+      msg.data = static_cast<int>(coeffs[2] - image.cols / 2);
+      angle_error_pub_->publish(msg);
 
       //create bird_view message and publish it
       auto msg_out = cv_bridge::CvImage(
@@ -205,7 +282,7 @@ private:
         bird_eye
       ).toImageMsg();
         
-      msg_out->header = msg->header; // optionally copy timestamp
+      // msg_out->header = msg->header; // optionally copy timestamp
       bird_pub_->publish(*msg_out);
 
     } catch (cv_bridge::Exception &e) {
@@ -221,7 +298,9 @@ private:
   cv::Mat binary; 
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr bird_pub_;
+  rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr angle_error_pub_;
   cv::Mat warp_mask = cv::Mat::zeros(144, 176, CV_8UC1);  //adjust resolution here
+  std::vector<int> squares_left_x, squares_left_y, squares_right_x, squares_right_y; //vector declaration for curve fitting
 
 };
 
